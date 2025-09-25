@@ -15,6 +15,23 @@ if (!fs.existsSync(dataDir)) {
 export const db = new Database(dbPath);
 logger.info("Database initialized", { dbPath });
 
+// Check if deleted_at column exists and add it if it doesn't
+try {
+  const columns = db.prepare("PRAGMA table_info(documents)").all() as Array<{
+    name: string;
+  }>;
+  const hasDeletedAt = columns.some((col) => col.name === "deleted_at");
+
+  if (!hasDeletedAt) {
+    db.exec("ALTER TABLE documents ADD COLUMN deleted_at TEXT");
+    logger.info("Added deleted_at column to documents table");
+  }
+} catch (error) {
+  logger.warn("Failed to check/add deleted_at column", {
+    error: error instanceof Error ? error.message : String(error),
+  });
+}
+
 // Initialize schema if not exists
 db.exec(`
 CREATE TABLE IF NOT EXISTS documents (
@@ -27,8 +44,12 @@ CREATE TABLE IF NOT EXISTS documents (
   summary TEXT,
   key_points TEXT,
   processing_status TEXT NOT NULL DEFAULT 'uploaded',
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  deleted_at TEXT
 );
+
+-- Add deleted_at column if it doesn't exist (for existing databases)
+-- SQLite doesn't support IF NOT EXISTS for ALTER TABLE, so we'll handle this in the application
 
 -- qa_messages table removed - now using conversation system
 
@@ -62,6 +83,7 @@ export type DocumentRecord = {
   key_points: string | null; // JSON string array
   processing_status: "uploaded" | "processing" | "completed" | "failed";
   created_at: string;
+  deleted_at: string | null;
 };
 
 // QAMessageRecord type removed - now using conversation system

@@ -15,6 +15,7 @@ import {
   saveConversationMessage,
   getConversationHistory,
   listConversations,
+  softDeleteDocument,
 } from "../repositories/documents.ts";
 import {
   generateSummaryAndKeyPoints,
@@ -701,6 +702,141 @@ documentsRouter.post(
         document1Id: req.body?.document1Id,
         document2Id: req.body?.document2Id,
         comparisonType: req.body?.comparisonType,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      next(error);
+    }
+  }
+);
+
+// Soft delete document
+documentsRouter.delete(
+  "/:id",
+  validateParams(documentIdSchema),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const documentId = Number(id);
+
+      logger.info("Soft deleting document", { documentId });
+
+      softDeleteDocument(documentId);
+
+      logger.info("Document soft-deleted successfully", { documentId });
+      res.json({
+        message: "Document deleted successfully",
+        id: documentId,
+      });
+    } catch (error) {
+      logger.error("Failed to soft delete document", {
+        documentId: req.params.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      next(error);
+    }
+  }
+);
+
+// Download document file
+documentsRouter.get(
+  "/:id/download",
+  validateParams(documentIdSchema),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const documentId = Number(id);
+
+      logger.info("Downloading document file", { documentId });
+
+      const doc = getDocumentById(documentId);
+      if (!doc) {
+        throw new NotFoundError("Document not found");
+      }
+
+      const filePath = path.join(uploadDir, doc.filename);
+
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        throw new NotFoundError("File not found on disk");
+      }
+
+      // Set appropriate headers for file download
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${doc.original_name}"`
+      );
+      res.setHeader("Content-Type", doc.mime_type);
+      res.setHeader("Content-Length", doc.size_bytes);
+
+      // Stream the file
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+
+      logger.info("Document file downloaded successfully", {
+        documentId,
+        originalName: doc.original_name,
+        sizeBytes: doc.size_bytes,
+      });
+    } catch (error) {
+      logger.error("Failed to download document file", {
+        documentId: req.params.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      next(error);
+    }
+  }
+);
+
+// Download conversation as text file
+documentsRouter.get(
+  "/conversations/:conversationId/download",
+  async (req, res, next) => {
+    try {
+      const { conversationId } = req.params;
+
+      logger.info("Downloading conversation", { conversationId });
+
+      // Get conversation history
+      const messages = getConversationHistory(conversationId, 1000); // Get up to 1000 messages
+
+      if (messages.length === 0) {
+        throw new NotFoundError("Conversation not found or has no messages");
+      }
+
+      // Format conversation as readable text
+      const conversationText = messages
+        .map((msg, index) => {
+          const timestamp = new Date(msg.created_at).toLocaleString();
+          const role = msg.role === "user" ? "User" : "Assistant";
+          return `[${timestamp}] ${role}:\n${msg.content}\n`;
+        })
+        .join("\n---\n\n");
+
+      const fileName = `conversation_${conversationId}_${
+        new Date().toISOString().split("T")[0]
+      }.txt`;
+      const fileContent = `Conversation Export\nConversation ID: ${conversationId}\nExported: ${new Date().toISOString()}\n\n${"=".repeat(
+        50
+      )}\n\n${conversationText}`;
+
+      // Set headers for text file download
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${fileName}"`
+      );
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      res.setHeader("Content-Length", Buffer.byteLength(fileContent, "utf8"));
+
+      res.send(fileContent);
+
+      logger.info("Conversation downloaded successfully", {
+        conversationId,
+        messageCount: messages.length,
+        fileName,
+      });
+    } catch (error) {
+      logger.error("Failed to download conversation", {
+        conversationId: req.params.conversationId,
         error: error instanceof Error ? error.message : String(error),
       });
       next(error);

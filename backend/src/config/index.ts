@@ -37,7 +37,7 @@ const configSchema = z.object({
 
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(15 * 60 * 1000), // 15 minutes
-  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(100),
+  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(10000),
 
   // CORS Configuration
   CORS_ORIGIN: z.string().default("http://localhost:5173"),

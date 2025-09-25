@@ -11,6 +11,32 @@ The API has been enhanced with new chatbot and document comparison functionality
 
 ## New Endpoints
 
+### 0. Health Check - `/health`
+
+**GET** `/health`
+
+**Purpose**: Health check endpoint to verify API server status.
+
+**Response**:
+
+```json
+{
+  "ok": true,
+  "timestamp": "2025-01-24T20:41:30.000Z",
+  "version": "1.0.0",
+  "environment": "development"
+}
+```
+
+**Use Cases**:
+
+- ✅ **Load balancer health checks**
+- ✅ **Monitoring and alerting**
+- ✅ **Service discovery**
+- ✅ **Development testing**
+
+---
+
 ### 1. General Chatbot - `/api/documents/chat`
 
 **POST** `/api/documents/chat`
@@ -226,6 +252,87 @@ GET /api/documents/conversations/chat_1758746490105_ivrfc0uw7?limit=20
 - ✅ Returns document with summary and key_points
 - ✅ Summary field populated by auto-summarization
 
+### Document Processing Status
+
+**GET** `/api/documents/:id/status`
+
+**Purpose**: Get the current processing status of a document.
+
+**Response**:
+
+```json
+{
+  "id": 6,
+  "processing_status": "processing",
+  "has_summary": false,
+  "has_key_points": false,
+  "timestamp": "2025-01-24T20:41:30.000Z"
+}
+```
+
+**Status Values**:
+
+- `uploaded`: Document uploaded, waiting for processing
+- `processing`: AI analysis in progress
+- `completed`: Processing finished successfully
+- `failed`: Processing encountered an error
+
+### Real-Time Status Updates
+
+**GET** `/api/documents/:id/status/stream`
+
+**Purpose**: Server-Sent Events (SSE) endpoint for real-time document processing status updates.
+
+**Features**:
+
+- ✅ **Real-time updates**: Streams status changes as they happen
+- ✅ **Auto-close**: Connection closes when processing completes or fails
+- ✅ **Timeout protection**: Auto-closes after 5 minutes
+- ✅ **CORS enabled**: Works with frontend applications
+
+**Response Format** (Server-Sent Events):
+
+```
+data: {"id":6,"processing_status":"processing","has_summary":false,"has_key_points":false,"timestamp":"2025-01-24T20:41:30.000Z"}
+
+data: {"id":6,"processing_status":"completed","has_summary":true,"has_key_points":true,"timestamp":"2025-01-24T20:41:45.000Z"}
+```
+
+**Frontend Integration**:
+
+```javascript
+// Real-time status monitoring
+const eventSource = new EventSource(
+  `/api/documents/${documentId}/status/stream`
+);
+
+eventSource.onmessage = (event) => {
+  const status = JSON.parse(event.data);
+  console.log("Status update:", status);
+
+  if (status.processing_status === "completed") {
+    // Processing finished, update UI
+    eventSource.close();
+  }
+};
+
+eventSource.onerror = (error) => {
+  console.error("SSE error:", error);
+  eventSource.close();
+};
+```
+
+### Mock Upload (Development)
+
+**POST** `/api/documents/mock-upload`
+
+**Purpose**: Mock upload endpoint for testing without actual file processing.
+
+**Request**: Same as regular upload
+**Response**: Same as regular upload but with `processing_status: "completed"` immediately
+
+**Usage**: Set `MOCK_AI=1` environment variable to enable mock mode.
+
 ---
 
 ## Frontend Integration Examples
@@ -350,22 +457,163 @@ CREATE TABLE conversation_messages (
 
 ---
 
+### 6. Document File Download - `/api/documents/:id/download`
+
+**GET** `/api/documents/:id/download`
+
+**Purpose**: Download the original document file that was uploaded.
+
+**Parameters**:
+
+- `id` (path): Document ID
+
+**Response**: Binary file stream with appropriate headers
+
+**Headers Set**:
+
+- `Content-Disposition`: `attachment; filename="original_filename.pdf"`
+- `Content-Type`: Document's MIME type (e.g., `application/pdf`)
+- `Content-Length`: File size in bytes
+
+**Use Cases**:
+
+- ✅ **Document backup and archival**
+- ✅ **Offline access to original files**
+- ✅ **Compliance and audit requirements**
+- ✅ **File sharing and distribution**
+
+**Example**:
+
+```bash
+curl -O http://localhost:3001/api/documents/1/download
+# Downloads the original PDF file
+```
+
+---
+
+### 7. Conversation Download - `/api/documents/conversations/:conversationId/download`
+
+**GET** `/api/documents/conversations/:conversationId/download`
+
+**Purpose**: Export a conversation as a readable text file for backup, sharing, or compliance.
+
+**Parameters**:
+
+- `conversationId` (path): Conversation ID
+
+**Response**: Text file with formatted conversation
+
+**File Format**:
+
+```
+Conversation Export
+Conversation ID: chat_1234567890_abc123
+Exported: 2025-01-24T20:41:30.000Z
+
+==================================================
+
+[1/24/2025, 2:41:30 PM] User:
+What are the safety requirements for working at height?
+
+---
+
+[1/24/2025, 2:41:32 PM] Assistant:
+Based on the compliance framework, working at height requires...
+
+---
+
+[1/24/2025, 2:42:15 PM] User:
+Can you provide more details about PPE requirements?
+
+---
+
+[1/24/2025, 2:42:18 PM] Assistant:
+Certainly! The PPE requirements include...
+```
+
+**Use Cases**:
+
+- ✅ **Conversation backup and archival**
+- ✅ **Compliance documentation**
+- ✅ **Knowledge sharing and training**
+- ✅ **Audit trail preservation**
+- ✅ **Offline reference**
+
+**Example**:
+
+```bash
+curl -O http://localhost:3001/api/documents/conversations/chat_1234567890_abc123/download
+# Downloads conversation_chat_1234567890_abc123_2025-01-24.txt
+```
+
+---
+
+### 8. Soft Delete Document - `/api/documents/:id`
+
+**DELETE** `/api/documents/:id`
+
+**Purpose**: Soft delete a document (preserves data but hides from listings).
+
+**Parameters**:
+
+- `id` (path): Document ID
+
+**Response**:
+
+```json
+{
+  "message": "Document deleted successfully",
+  "id": 123
+}
+```
+
+**Behavior**:
+
+- Sets `deleted_at` timestamp instead of removing record
+- Document becomes invisible to all queries
+- All related data (conversations, analysis) is preserved
+- Can be restored by clearing `deleted_at` field
+
+**Use Cases**:
+
+- ✅ **Data preservation for compliance**
+- ✅ **Accidental deletion recovery**
+- ✅ **Audit trail maintenance**
+- ✅ **Temporary document hiding**
+
+---
+
 ## Implementation Status
 
 ✅ **Completed**:
 
-- [x] Chatbot API without document ID in URL (`/api/documents/chat`)
+- [x] **Health check endpoint** (`/health`) - Server status monitoring
+- [x] **Document listing** (`GET /api/documents/`) - List all documents
+- [x] **Document details** (`GET /api/documents/:id`) - Get document with summary
+- [x] **Document status** (`GET /api/documents/:id/status`) - Check processing status
+- [x] **Real-time status streaming** (`GET /api/documents/:id/status/stream`) - SSE updates
+- [x] **Document upload** (`POST /api/documents/upload`) - Upload with auto-summarization
+- [x] **Mock upload** (`POST /api/documents/mock-upload`) - Testing without AI processing
+- [x] **Document Q&A** (`POST /api/documents/:id/ask`) - Ask questions about specific documents
+- [x] **General chatbot** (`POST /api/documents/chat`) - Chat with/without document context
+- [x] **Document comparison** (`POST /api/documents/compare`) - Gap analysis and similarity
+- [x] **Conversation management** (`GET /api/documents/conversations`) - List conversations
+- [x] **Conversation history** (`GET /api/documents/conversations/:id`) - Get message history
+- [x] **Document file download** (`GET /api/documents/:id/download`) - Download original files
+- [x] **Conversation download** (`GET /api/documents/conversations/:id/download`) - Export conversations
+- [x] **Soft delete document** (`DELETE /api/documents/:id`) - Soft delete with data preservation
 - [x] **Document-conversation association**: Chat messages properly linked to documents
-- [x] **Conversation management endpoints**: List and retrieve conversation history
 - [x] **Unified Q&A system**: `/documents/:id/ask` now uses conversations (eliminates redundancy)
 - [x] **Smart caching**: Conversation history-based caching instead of exact-match
 - [x] **Database consolidation**: Removed redundant `qa_messages` table
-- [x] Document comparison/gap analysis (`/api/documents/compare`)
-- [x] Summarization function (already existed)
-- [x] Clean database schema with 3 core tables
-- [x] TypeScript types and validation
-- [x] Error handling and logging
-- [x] Cost tracking for all AI operations
+- [x] **Summarization function**: Auto-generates summary and key points
+- [x] **Clean database schema**: 3 core tables with proper relationships
+- [x] **TypeScript types and validation**: Full type safety
+- [x] **Error handling and logging**: Comprehensive error management
+- [x] **Cost tracking**: All AI operations track usage and costs
+- [x] **Soft delete functionality**: Documents are soft-deleted instead of hard-deleted
+- [x] **File download**: Download original document files
+- [x] **Conversation download**: Export chat conversations as text files
 
 🔄 **Ready for Frontend Integration**:
 

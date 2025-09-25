@@ -73,7 +73,10 @@ export function listDocuments(): Array<
   try {
     const rows = db
       .prepare(
-        `SELECT id, original_name, mime_type, size_bytes, summary, processing_status, created_at FROM documents ORDER BY created_at DESC`
+        `SELECT id, original_name, mime_type, size_bytes, summary, processing_status, created_at 
+         FROM documents 
+         WHERE deleted_at IS NULL 
+         ORDER BY created_at DESC`
       )
       .all();
 
@@ -103,7 +106,7 @@ export function getDocumentById(id: number): DocumentRecord | undefined {
 
   try {
     const row = db
-      .prepare(`SELECT * FROM documents WHERE id = ?`)
+      .prepare(`SELECT * FROM documents WHERE id = ? AND deleted_at IS NULL`)
       .get(id) as any;
     if (!row) {
       logger.debug("Document not found", { id });
@@ -391,5 +394,35 @@ export function listConversations(
       error as Error
     );
     throw new DatabaseError("Failed to list conversations", error as Error);
+  }
+}
+
+export function softDeleteDocument(id: number): void {
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new ValidationError("Valid document ID is required");
+  }
+
+  try {
+    const stmt = db.prepare(
+      `UPDATE documents SET deleted_at = datetime('now') WHERE id = ? AND deleted_at IS NULL`
+    );
+
+    const info = stmt.run(id);
+
+    if (info.changes === 0) {
+      logger.warn(
+        "No document soft-deleted - ID not found or already deleted",
+        { id }
+      );
+      throw new ValidationError("Document not found or already deleted");
+    }
+
+    logger.info("Document soft-deleted", { id });
+  } catch (error) {
+    logger.error("Failed to soft delete document", { id }, error as Error);
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+    throw new DatabaseError("Failed to soft delete document", error as Error);
   }
 }

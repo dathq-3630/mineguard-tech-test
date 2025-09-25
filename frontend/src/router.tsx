@@ -7,7 +7,6 @@ import {
 import AppLayout from "./components/AppLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import Upload from "./pages/Upload";
 import DocumentDetail from "./pages/DocumentDetail";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 
@@ -46,12 +45,6 @@ const dashboardRoute = createRoute({
   component: withAuth(Dashboard),
 });
 
-const uploadRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/upload",
-  component: withAuth(Upload),
-});
-
 const docDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/doc/$id",
@@ -61,7 +54,6 @@ const docDetailRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   loginRoute,
   dashboardRoute,
-  uploadRoute,
   docDetailRoute,
 ]);
 
