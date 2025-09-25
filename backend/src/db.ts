@@ -1,8 +1,8 @@
 import path from "node:path";
 import fs from "node:fs";
 import Database from "better-sqlite3";
-import { config } from "./config/index.ts";
-import { logger } from "./utils/logger.ts";
+import { config } from "./config/index";
+import { logger } from "./utils/logger";
 
 const dbPath = path.resolve(config.DATABASE_PATH);
 const dataDir = path.dirname(dbPath);

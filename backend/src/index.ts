@@ -2,10 +2,10 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import { config } from "./config/index.ts";
-import { logger } from "./utils/logger.ts";
-import { errorHandler, notFoundHandler } from "./middleware/errorHandler.ts";
-import { documentsRouter } from "./routes/documents.ts";
+import { config } from "./config/index";
+import { logger } from "./utils/logger";
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
+import { documentsRouter } from "./routes/documents";
 
 const app = express();
 

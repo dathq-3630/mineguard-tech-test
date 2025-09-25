@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
-import { AppError } from "../utils/errors.ts";
-import { logger } from "../utils/logger.ts";
-import { config } from "../config/index.ts";
+import { AppError } from "../utils/errors";
+import { logger } from "../utils/logger";
+import { config } from "../config/index";
 
 export function errorHandler(
   error: Error,

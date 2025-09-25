@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { config, getModelPrice } from "../config/index.ts";
-import { logger } from "../utils/logger.ts";
-import { AIServiceError } from "../utils/errors.ts";
+import { config, getModelPrice } from "../config/index";
+import { logger } from "../utils/logger";
+import { AIServiceError } from "../utils/errors";
 
 const anthropic = new Anthropic({
   apiKey: config.ANTHROPIC_API_KEY,
@@ -39,16 +39,9 @@ async function countTokensForText(text: string): Promise<number> {
   }
 
   try {
-    const resp = await anthropic.messages.countTokens({
-      model: config.AI_SYNTHESIS_MODEL,
-      messages: [
-        {
-          role: "user",
-          content: text.slice(0, 200000), // Limit to prevent excessive token usage
-        },
-      ],
-    });
-    return resp.input_tokens ?? 0;
+    // Estimate token count (rough approximation: 1 token ≈ 4 characters)
+    const estimatedTokens = Math.ceil(text.length / 4);
+    return estimatedTokens;
   } catch (error) {
     logger.error(
       "Failed to count tokens",
@@ -339,7 +332,6 @@ export async function generateSummaryAndKeyPoints(
                   {
                     type: "text",
                     text: chunk,
-                    cache_control: { type: "ephemeral" },
                   },
                 ],
               },
@@ -854,7 +846,6 @@ export async function answerQuestion(
             {
               type: "text",
               text: `Document excerpt:\n${snippet}`,
-              cache_control: { type: "ephemeral" },
             },
             { type: "text", text: `Question: ${question}` },
           ],
@@ -924,7 +915,6 @@ export async function answerQuestion(
             {
               type: "text",
               text: `Document excerpt (extended):\n${largerSnippet}`,
-              cache_control: { type: "ephemeral" },
             },
             { type: "text", text: `Question: ${question}` },
           ],

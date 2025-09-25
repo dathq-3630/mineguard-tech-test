@@ -1,4 +1,4 @@
-import { config } from "../config/index.ts";
+import { config } from "../config/index";
 
 export const LogLevel = {
   ERROR: 0,

@@ -16,22 +16,22 @@ import {
   getConversationHistory,
   listConversations,
   softDeleteDocument,
-} from "../repositories/documents.ts";
+} from "../repositories/documents";
 import {
   generateSummaryAndKeyPoints,
   answerQuestion,
   handleChatbotMessage,
   compareDocuments,
-} from "../services/ai.ts";
-import { config, getModelPrice } from "../config/index.ts";
-import { logger } from "../utils/logger.ts";
+} from "../services/ai";
+import { config, getModelPrice } from "../config/index";
+import { logger } from "../utils/logger";
 import {
   AppError,
   ValidationError,
   FileProcessingError,
   NotFoundError,
-} from "../utils/errors.ts";
-import { validateBody, validateParams } from "../middleware/validation.ts";
+} from "../utils/errors";
+import { validateBody, validateParams } from "../middleware/validation";
 
 const uploadDir = path.resolve(config.UPLOAD_DIR);
 if (!fs.existsSync(uploadDir)) {

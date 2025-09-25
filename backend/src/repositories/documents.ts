@@ -1,6 +1,6 @@
-import { db, type DocumentRecord } from "../db.ts";
-import { logger } from "../utils/logger.ts";
-import { DatabaseError, ValidationError } from "../utils/errors.ts";
+import { db, type DocumentRecord } from "../db";
+import { logger } from "../utils/logger";
+import { DatabaseError, ValidationError } from "../utils/errors";
 
 export type CreateDocumentInput = {
   filename: string;
