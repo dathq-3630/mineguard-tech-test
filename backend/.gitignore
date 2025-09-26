@@ -15,13 +15,21 @@ yarn-error.log*
 dist/
 build/
 
-# Database
-data/app.db
-data/*.db
+# Database files
+data/
+data/*
+*.db
+*.sqlite
+*.sqlite3
+:memory:
 
-# Uploads
+# Uploads and test uploads
 uploads/
 uploads/*
+uploads-test/
+uploads-test/*
+test-uploads/
+test-uploads/*
 
 # Logs
 logs/
