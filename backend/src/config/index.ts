@@ -40,7 +40,7 @@ const configSchema = z.object({
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(10000),
 
   // CORS Configuration
-  CORS_ORIGIN: z.string().default("http://localhost:5173"),
+  CORS_ORIGIN: z.string().default("*"),
 });
 
 type Config = z.infer<typeof configSchema>;

@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: mineguard-backend
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_PATH
+        value: ./data/app.db
+      - key: UPLOAD_DIR
+        value: ./uploads
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: ANTHROPIC_API_KEY
+        sync: false # You'll set this manually in Render dashboard
