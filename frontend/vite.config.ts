@@ -9,4 +9,10 @@ export default defineConfig({
     assetsDir: "assets",
   },
   base: "./",
+  server: {
+    historyApiFallback: true,
+  },
+  preview: {
+    historyApiFallback: true,
+  },
 });
