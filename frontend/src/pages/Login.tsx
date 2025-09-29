@@ -12,7 +12,7 @@ import { useAuth } from "../auth/AuthContext";
 import { useRouter } from "@tanstack/react-router";
 
 export default function Login() {
-  const { login, user } = useAuth();
+  const { login } = useAuth();
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

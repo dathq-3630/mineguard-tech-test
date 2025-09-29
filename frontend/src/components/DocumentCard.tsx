@@ -130,7 +130,13 @@ export default function DocumentCard({
             flexWrap="wrap"
           >
             <StatusBadge
-              status={currentStatus}
+              status={
+                currentStatus as
+                  | "uploaded"
+                  | "processing"
+                  | "completed"
+                  | "failed"
+              }
               isStreaming={isConnected && isProcessing}
             />
             <Chip
@@ -182,17 +188,20 @@ export default function DocumentCard({
 
       <CardActions sx={{ pt: 0, px: 2, pb: 2, mt: "auto" }}>
         <Stack direction="row" spacing={1} sx={{ width: "100%" }}>
-          <Button
-            component={Link}
+          <Link
             to="/doc/$id"
             params={{ id: document.id.toString() }}
-            variant="contained"
-            size="small"
-            startIcon={<ViewIcon />}
-            sx={{ flexGrow: 1 }}
+            style={{ textDecoration: "none", flexGrow: 1 }}
           >
-            View
-          </Button>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<ViewIcon />}
+              sx={{ width: "100%" }}
+            >
+              View
+            </Button>
+          </Link>
 
           <Tooltip title="Download document">
             <IconButton onClick={handleDownload} color="primary" size="small">

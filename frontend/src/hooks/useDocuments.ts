@@ -165,7 +165,7 @@ export const useChat = () => {
 
       return response.json();
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate conversations to refresh the list
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
 

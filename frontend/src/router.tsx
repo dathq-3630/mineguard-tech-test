@@ -2,7 +2,6 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
-  Router,
 } from "@tanstack/react-router";
 import AppLayout from "./components/AppLayout";
 import Login from "./pages/Login";
@@ -57,7 +56,7 @@ const routeTree = rootRoute.addChildren([
   docDetailRoute,
 ]);
 
-export const router: Router = createRouter({ routeTree });
+export const router = createRouter({ routeTree });
 
 declare module "@tanstack/react-router" {
   interface Register {

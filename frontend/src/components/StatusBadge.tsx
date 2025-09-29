@@ -58,7 +58,7 @@ export default function StatusBadge({
       label={config.label}
       color={config.color}
       size="small"
-      icon={config.icon}
+      icon={config.icon || undefined}
       variant={status === "processing" && isStreaming ? "filled" : "outlined"}
     />
   );
