@@ -26,7 +26,7 @@ export function useDocumentStatus(
     }
 
     const baseUrl =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+      import.meta.env.VITE_API_URL || "http://localhost:3001";
     const eventSource = new EventSource(
       `${baseUrl}/api/documents/${documentId}/status/stream`
     );

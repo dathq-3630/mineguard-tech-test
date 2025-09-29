@@ -68,7 +68,7 @@ export default function Dashboard() {
 
       const response = await fetch(
         `${
-          import.meta.env.VITE_API_BASE_URL || "http://localhost:3001"
+          import.meta.env.VITE_API_URL || "http://localhost:3001"
         }/api/documents/upload`,
         {
           method: "POST",
@@ -117,7 +117,7 @@ export default function Dashboard() {
     try {
       const response = await fetch(
         `${
-          import.meta.env.VITE_API_BASE_URL || "http://localhost:3001"
+          import.meta.env.VITE_API_URL || "http://localhost:3001"
         }/api/documents/${documentId}`,
         {
           method: "DELETE",
