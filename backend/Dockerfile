@@ -1,5 +1,8 @@
-# Use Node.js 18 Alpine for smaller image size
-FROM node:18-alpine
+# Use Node.js 20 Alpine for better-sqlite3 compatibility
+FROM node:20-alpine
+
+# Install Python and build dependencies for native modules
+RUN apk add --no-cache python3 make g++
 
 # Set working directory
 WORKDIR /app
@@ -18,6 +21,9 @@ RUN npm run build
 
 # Remove dev dependencies to reduce image size
 RUN npm prune --production
+
+# Clean up build dependencies to reduce image size
+RUN apk del python3 make g++
 
 # Create uploads directory
 RUN mkdir -p uploads uploads-test data
